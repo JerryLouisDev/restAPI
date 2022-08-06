@@ -1,12 +1,15 @@
 "use strict";
 
-const { Model, DataTypes } = require('sequelize');
+const { Model, DataTypes, ConnectionRefusedError } = require('sequelize');
 // const bcrpyt = require('bcryptjs');
 // const sequelize = require('sequelize');
 
 module.exports = (sequelize) => {
 
-    class Course extends Model { }
+    class Course extends Model { 
+        static associate(models) {}
+    }
+
     Course.init({
         id: {
             type: DataTypes.INTEGER,
@@ -19,9 +22,6 @@ module.exports = (sequelize) => {
             validate: {
                 notEmpty: {
                     msg: 'Field Requires a Title'
-                },
-                notNull: {
-                    msg: 'Please enter a Title'
                 }
             }
         },
@@ -31,27 +31,19 @@ module.exports = (sequelize) => {
             validate: {
                 notEmpty: {
                     msg: 'Field Requires a Description'
-                },
-                notNull: {
-                    msg: 'Please enter a Description'
                 }
             }
         },
-        estimatedTime: {
-            type: DataTypes.STRING
-        },
-        materialsNeeded: {
-            type: DataTypes.STRING
-        }
-    },
-        { sequelize }
+        estimatedTime: DataTypes.STRING,
+        materialsNeeded: DataTypes.STRING
+    },{ 
+        sequelize,
+        modelName: 'Course',
+     }
     );
     Course.associate = (models) => {
         Course.belongsTo(models.User, {
-            foreignKey: {
-                fieldName: 'userId',
-                allowNull: 'false',
-            }
+            foreignKey:  'userId'
         })
     };
     return Course;
