@@ -23,19 +23,13 @@ function asyncHandler(cb) {
 //Adding in User Routes
 //Route that returns the current authenticated user formatted as JSON
 router.get('/', authenticateUser, asyncHandler(async(req, res) => {
-    const user = req.currentUser;
-    res.json({
-        firstName: user.firstName,
-        lastName: user.lastName,
-        emailAddress: user.emailAddress,
-        userId: user.userId
-    });
-    res.status(200);
+    res.status(200).json(req.currentUser)
   }));
   
 //Route that creates a new user
 router.post('/', asyncHandler(async (req, res) => {
     try {
+      console.log(req.body);
         const user = await User.create(req.body);
         res.status(201).location('/').end();
     } catch (error) {

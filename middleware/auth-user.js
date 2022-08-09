@@ -1,43 +1,55 @@
-'use strict';
+"use strict";
 
-const auth = require('basic-auth');
-const bcrypt = require('bcryptjs');
-const { User } = require('../models');
+const auth = require("basic-auth");
+const bcrypt = require("bcryptjs");
+const User = require("../models").User;
 
-//Middleware using basic authentication to verify the request and return a 401 status code when authentication fails
+//Middleware using basic authentication to verify the request and return a 401 status code when it fails
 exports.authenticateUser = async (req, res, next) => {
-    //Creating a variable for the authentification result to display
-    let message;
-    const userCredentials = auth(req);
-    console.log(userCredentials);
-    //Checks if the user's credentials are available
-    if (userCredentials) {
-        const user = await User.findOne({
-            where: {
-                emailAddress: userCredentials.name
-            }
+  let message = null;
+
+  // Parse the user's credentials from the Authorization header.
+  const credentials = auth(req);
+  // If the user's credentials are available...
+  if (credentials) {
+
+    const user = await User.findOne({
+      raw: true,
+      where: { emailAddress: credentials.name },
     });
+   console.log(user);
     if (user) {
-        const authenticated = bcrypt.compareSync(userCredentials.pass, user.password);
+      // Use the bcrypt npm package to compare the user's password
+      const authenticated = await bcrypt.compare(
+        credentials.pass,
+        user.password
+      );
+      console.log(authenticated);
+      // If the passwords match...
+      if (authenticated) {
+        console.log(
+          `Authentication successful for username: ${user.emailAddress}`
+        );
 
-        if (authenticated) {
-            console.log(`Authentication successful for: ${user.firstName} ${user.lastName}`)
-            req.currentUser = user;
+        req.currentUser = user;
+      } else {
+        message = `Authentication failure for username: ${user.emailAddress}`;
+      }
+    } else {
+      message = `User not found for username: ${credentials.name}`;
+    }
+  } else {
+    message = "Auth header not found";
+  }
 
-        } else {
-            message = `Authentication failed for: ${user.firstName} ${user.lastName}`;
-        }
-        } else {
-            message = `User ${user.firstName} ${user.lastName} not found.`;
-        }
-        } else {
-            message = 'Authorization header not found.';
-        }
+  // If user authentication failed...
+  if (message) {
+    console.warn(message);
 
-        if (message) {
-            console.log(message);
-            res.status(401).json({message: 'Access Denied'})
-        } else {
-            next();
-        }
-    };
+    // Return a response with a 401 Unauthorized HTTP status code.
+    res.status(401).json({ message: "Access Denied" });
+  } else {
+    // Call the next() method.
+    next();
+  }
+};

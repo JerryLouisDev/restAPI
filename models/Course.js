@@ -1,50 +1,58 @@
 "use strict";
 
-const { Model, DataTypes, ConnectionRefusedError } = require('sequelize');
-// const bcrpyt = require('bcryptjs');
-// const sequelize = require('sequelize');
+const { Model } = require('sequelize');
 
-module.exports = (sequelize) => {
+module.exports = (sequelize, DataTypes) => {
 
-    class Course extends Model { 
-        static associate(models) {}
-    }
+    class Course extends Model {
 
-    Course.init({
-        id: {
-            type: DataTypes.INTEGER,
-            primaryKey: true,
-            autoincrement: true
-        },
-        title: {
+        static associate(models) {
+          // define association here
+        }
+      }
+      Course.init(
+        {
+          title: {
             type: DataTypes.STRING,
             allowNull: false,
             validate: {
-                notEmpty: {
-                    msg: 'Field Requires a Title'
-                }
-            }
-        },
-        descripton: {
-            type: DataTypes.TEXT,
+              notNull: {
+                msg: "A Title is required",
+              },
+              notEmpty: {
+                msg: "Please provide a Title",
+              },
+            },
+          },
+          description: {
+            type: DataTypes.STRING,
             allowNull: false,
             validate: {
-                notEmpty: {
-                    msg: 'Field Requires a Description'
-                }
-            }
+              notNull: {
+                msg: "A Description is required",
+              },
+              notEmpty: {
+                msg: "Please provide a Description",
+              },
+            },
+          },
+          estimatedTime: DataTypes.STRING,
+          materialsNeeded: DataTypes.STRING,
         },
-        estimatedTime: DataTypes.STRING,
-        materialsNeeded: DataTypes.STRING
-    },{ 
-        sequelize,
-        modelName: 'Course',
-     }
-    );
-    Course.associate = (models) => {
+        {
+          sequelize,
+          modelName: "Course",
+        }
+      );
+    
+      Course.associate = (models) => {
         Course.belongsTo(models.User, {
-            foreignKey:  'userId'
-        })
-    };
-    return Course;
+          as: "User", // alias
+          foreignKey: {
+            fieldName: "userId",
+            allowNull: false,
+          },
+        });
+      };
+      return Course;
 }

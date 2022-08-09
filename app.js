@@ -16,14 +16,30 @@ const app = express();
 // setup morgan which gives us http request logging
 app.use(morgan('dev'));
 app.use(express.json());
-app.use('/api/users', userRoutes);
-app.use('/api/courses', courseRoutes);
+app.use(express.urlencoded({extended:false}));
+
+(async () =>{
+  try{
+    await sequelize.authenticate();
+    console.log('Connection to the database was successful!');
+    await sequelize.sync();
+    console.log('model sync sucessful');
+  }
+  catch(error){
+    console.error('database connection failed', error);
+  }
+})();
+
 // setup a friendly greeting for the root route
 app.get('/', (req, res) => {
   res.json({
     message: 'Welcome to the REST API project!',
   });
 });
+
+app.use('/api/users', userRoutes);
+app.use('/api/courses', courseRoutes);
+
 
 // send 404 if no other route matched
 app.use((req, res) => {
@@ -44,17 +60,9 @@ app.use((err, req, res, next) => {
   });
 });
 
-(async () => {
-  try {
-    await sequelize.authenticate();
-    console.log('Connection to the database was successful!');
-  } catch (error) {
-    console.log('Oh no! Connection to the database was unsuccessful.');
-  }
-})();
-
 // set our port
 app.set('port', process.env.PORT || 5000);
+
 
 // start listening on our port
 const server = app.listen(app.get('port'), () => {

@@ -17,18 +17,20 @@ function asyncHandler(cb) {
 router.get(
   "/",
   asyncHandler(async (req, res, next) => {
-    const course = await Course.findAll({
+    const courses = await Course.findAll({
       attributes: [
         "id",
         "title",
         "description",
-        "estimateTime",
+        "estimatedTime",
         "materialsNeeded",
         "userId",
+        
       ],
       include: [
         {
           model: User,
+          as:"User",
           attributes: ["id", "firstName", "lastName", "emailAddress"],
         },
       ],
@@ -52,6 +54,7 @@ router.get(
       include: [
         {
           model: User,
+          as:"User",
           attributes: ["id", "firstName", "lastName", "emailAddress"],
         },
       ],
@@ -64,14 +67,18 @@ router.get(
   })
 );
 // Creates a new course
+// Route that creates a new course.
 router.post(
   "/",
   authenticateUser,
-  asyncHandler(async (req, res, next) => {
+  asyncHandler(async (req, res) => {
     try {
       const course = await Course.create(req.body);
-      res.status(201).location(`/api/courses/${course.id}`).end();
+      res.setHeader("Location", "/courses/" + course.id);
+      res.status(201).json().end();
     } catch (error) {
+      console.log("ERROR: ", error.name);
+
       if (
         error.name === "SequelizeValidationError" ||
         error.name === "SequelizeUniqueConstraintError"
@@ -89,22 +96,7 @@ router.put(
   "/:id",
   authenticateUser,
   asyncHandler(async (req, res, next) => {
-    const course = await Course.findByPk(req.params.id, {
-      attributes: [
-        "id",
-        "title",
-        "description",
-        "estimatedTime",
-        "materialsNeeded",
-        "userId",
-      ],
-      include: [
-        {
-          model: User,
-          attributes: ["id", "firstName", "lastName", "emailAddress"],
-        },
-      ],
-    });
+    const course = await Course.findByPk(req.params.id);
     if (course) {
       const user = req.currentUser;
       if (user.id === course.userId) {
